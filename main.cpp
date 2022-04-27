@@ -61,7 +61,6 @@ int main(int argc, CHAR* argv[])
 }
 
 
-
 VOID DoDeleteSvc()
 {
     open_Service();
