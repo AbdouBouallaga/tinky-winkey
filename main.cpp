@@ -37,7 +37,7 @@ int OpenSvc() {
     return(1);
 }
 
-VOID DeleteSvc()
+void DeleteSvc()
 {
     if (OpenSvc()) {
         if (!DeleteService(serviceH))
@@ -52,20 +52,19 @@ VOID DeleteSvc()
     CloseServiceHandle(serviceH);
 }
 
-VOID SvcInstall()
+void SvcInstall()
 {
     SC_HANDLE schService;
-    TCHAR sPath[MAX_PATH];
+    char Path[260];
 
-    if (!GetCurrentDirectory(MAX_PATH, sPath))
+
+    if (!GetCurrentDirectory(260, Path))
     {
         printf("Cannot install service (%d)\n", GetLastError());
         return;
     }
-    //_tcscpy(sPath, "hello  ");
-    //TCHAR file;
-    //file = sPath;
-    //printf("%s", sPath);
+    strcat(Path, "\\winkey");
+    printf("%s\n", Path);
 
     schService = CreateService(
         scmH,              // SCM database 
@@ -75,12 +74,13 @@ VOID SvcInstall()
         SERVICE_WIN32_OWN_PROCESS, // service type 
         SERVICE_DEMAND_START,      // start type 
         SERVICE_ERROR_NORMAL,      // error control type 
-        sPath,                      // path to service's binary 
+        Path,                      // path to service's binary 
         NULL,                      // no load ordering group 
         NULL,                      // no tag identifier 
         NULL,                      // no dependencies 
         NULL,                      // LocalSystem account 
-        NULL);                     // no password 
+        NULL                       // no password 
+    );
 
     if (schService == NULL)
     {
