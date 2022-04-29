@@ -25,7 +25,7 @@ int OpenSvc() {
     serviceH = OpenService(
         scmH,       // SCM database 
         SVCNAME,    // name of service 
-        DELETE      // need delete access 
+        GENERIC_ALL      // need delete access 
     );
 
     if (serviceH == NULL)
@@ -63,7 +63,7 @@ void SvcInstall()
         printf("Cannot install service (%d)\n", GetLastError());
         return;
     }
-    strcat(Path, "\\winkey.exe");
+    strcat(Path, "\\tinky.exe");
     printf("%s\n", Path);
 
     schService = CreateService(
@@ -88,6 +88,7 @@ void SvcInstall()
         CloseServiceHandle(scmH);
         return;
     }
+
     else printf("Service installed successfully\n");
 
     CloseServiceHandle(schService);
@@ -145,7 +146,6 @@ int main(int argc, CHAR **argv)
     }
     CloseServiceHandle(scmH);
     CloseServiceHandle(serviceH);
-
 }
 
 

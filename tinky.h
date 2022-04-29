@@ -3,8 +3,7 @@
 
 #pragma comment(lib, "advapi32.lib")
 
-#define SVCNAME TEXT("tinky3")
-
+#define SVCNAME TEXT("tinky")
 
 
 #endif
