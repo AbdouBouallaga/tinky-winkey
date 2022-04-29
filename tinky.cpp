@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include <iostream>
-#include "Header.h"
+#include "tinky.h"
 
 
 SC_HANDLE scmH;
@@ -24,9 +24,9 @@ int Open_SCManager() {
 int OpenSvc() {
     serviceH = OpenService(
         scmH,       // SCM database 
-        SVCNAME,          // name of service 
-        DELETE
-    );            // need delete access 
+        SVCNAME,    // name of service 
+        DELETE      // need delete access 
+    );
 
     if (serviceH == NULL)
     {
@@ -63,7 +63,7 @@ void SvcInstall()
         printf("Cannot install service (%d)\n", GetLastError());
         return;
     }
-    strcat(Path, "\\winkey");
+    strcat(Path, "\\winkey.exe");
     printf("%s\n", Path);
 
     schService = CreateService(
@@ -93,6 +93,12 @@ void SvcInstall()
     CloseServiceHandle(schService);
 }
 
+void StartSvc() {
+    if (!StartService(serviceH, 0, NULL)) {
+        printf("StartService failed (%d)\n", GetLastError());
+    }
+}
+
 int main(int argc, CHAR **argv)
 {
     if (!Open_SCManager()) {
@@ -119,7 +125,7 @@ int main(int argc, CHAR **argv)
     else if (!strcmp("start", argv[1]))
     {
         if (OpenSvc()) {
-            DeleteSvc();
+            StartSvc();
         }
         else {
             printf("Service not installed!\nTry svc install.\n");
@@ -138,6 +144,8 @@ int main(int argc, CHAR **argv)
         usage();
     }
     CloseServiceHandle(scmH);
+    CloseServiceHandle(serviceH);
+
 }
 
 
