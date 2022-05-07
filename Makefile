@@ -1,12 +1,14 @@
 
+flags = /Wall /EHsc
+
 all : tinky winkey
 	LINK tinky.obj /OUT:svc.exe
 	LINK winkey.obj /OUT:winkey.exe
 tinky:
-	cl /c /WX /Wall tinky.cpp
+	cl /c /WX tinky.cpp
 
 winkey:
-	cl /c winkey.cpp
+	cl /c /WX winkey.cpp
 	
 clean:
 	@del tinky.obj

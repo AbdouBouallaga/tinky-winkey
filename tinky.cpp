@@ -3,7 +3,7 @@
 #include <iostream>
 #include "tinky.h"
 #include <Tlhelp32.h>
-#include <process.h>
+//#include <process.h>
 
 
 SC_HANDLE               scmH;
@@ -159,12 +159,17 @@ int main(int argc, CHAR **argv)
         CloseServiceHandle(serviceH);
     }
     else {
-        SERVICE_TABLE_ENTRY ServiceTable[] =
+        /*SERVICE_TABLE_ENTRY ServiceStartTable[] =
         {
-            {SVCNAME, (LPSERVICE_MAIN_FUNCTION)ServiceMain},
+            {SVCNAME, (LPSERVICE_MAIN_FUNCTIONA)ServiceMain },
             {NULL, NULL}
-        };
-        if (StartServiceCtrlDispatcher(ServiceTable))
+        };*/
+        SERVICE_TABLE_ENTRY ServiceStartTable[2];
+        ServiceStartTable[0].lpServiceName = SVCNAME;
+        ServiceStartTable[0].lpServiceProc = (LPSERVICE_MAIN_FUNCTION)ServiceMain;
+        ServiceStartTable[1].lpServiceName = NULL;
+        ServiceStartTable[1].lpServiceProc = NULL;
+        if (StartServiceCtrlDispatcher(ServiceStartTable))
             return 0;
         else if (GetLastError() == ERROR_FAILED_SERVICE_CONTROLLER_CONNECT)
             return -1; // Program not started as a service.
@@ -172,6 +177,7 @@ int main(int argc, CHAR **argv)
             return -2; // Other error.
     }
 }
+
 
 DWORD GetPidByName(char* filename)
 {
@@ -224,24 +230,24 @@ void    Tinky_Winky_Die() {
     CloseHandle(wkPH);
 }
 
-VOID WINAPI ServiceMain() {
+LPSERVICE_MAIN_FUNCTIONA ServiceMain() {
     g_StatusHandle = RegisterServiceCtrlHandler(SVCNAME, ServiceCtrlHandler);
     if (g_StatusHandle == NULL) {
         printf("Failed to register Service control handler to SCM\n");
-        return;
+        return 0;
     }
     ReportStatus(SERVICE_START_PENDING, NO_ERROR);
     g_ServiceStopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
     if (g_ServiceStopEvent == NULL) {
         ReportStatus(SERVICE_STOPPED, GetLastError());
-        return;
+        return 0;
     }
     ReportStatus(SERVICE_RUNNING, NO_ERROR);
     // execute winkey here
     Tinky_Winky();
     WaitForSingleObject(g_ServiceStopEvent, INFINITE);
     ReportStatus(SERVICE_STOPPED, NO_ERROR);
-    return;
+    return 0;
 }
 
 VOID WINAPI		ServiceCtrlHandler(DWORD CtrlCode) {
