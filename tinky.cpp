@@ -1,7 +1,10 @@
+#pragma warning(push)
+#pragma warning(disable:4668 4577)
 #include <windows.h>
 #include <iostream>
 #include "tinky.h"
 #include <Tlhelp32.h>
+#pragma warning(pop)
 
 
 SC_HANDLE               scmH;

