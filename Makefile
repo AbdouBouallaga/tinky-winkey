@@ -5,7 +5,7 @@ all : tinky winkey
 	LINK tinky.obj /OUT:svc.exe
 	LINK winkey.obj /OUT:winkey.exe
 tinky:
-	cl /c /WX tinky.cpp
+	cl /c /WX /Wall tinky.cpp
 
 winkey:
 	cl /c /WX winkey.cpp

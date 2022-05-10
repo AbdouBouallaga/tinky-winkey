@@ -1,9 +1,7 @@
 #include <windows.h>
-#include <tchar.h>
 #include <iostream>
 #include "tinky.h"
 #include <Tlhelp32.h>
-//#include <process.h>
 
 
 SC_HANDLE               scmH;
@@ -230,24 +228,57 @@ void    Tinky_Winky_Die() {
     CloseHandle(wkPH);
 }
 
-LPSERVICE_MAIN_FUNCTIONA ServiceMain() {
+//VOID WINAPI SvcMain(DWORD dwArgc, LPTSTR* lpszArgv)
+//{
+//    // Register the handler function for the service
+//
+//    gSvcStatusHandle = RegisterServiceCtrlHandler(
+//        SVCNAME,
+//        SvcCtrlHandler);
+//
+//    if (!gSvcStatusHandle)
+//    {
+//        SvcReportEvent(TEXT("RegisterServiceCtrlHandler"));
+//        return;
+//    }
+//
+//    // These SERVICE_STATUS members remain as set here
+//
+//    gSvcStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
+//    gSvcStatus.dwServiceSpecificExitCode = 0;
+//
+//    // Report initial status to the SCM
+//
+//    ReportSvcStatus(SERVICE_START_PENDING, NO_ERROR, 3000);
+//
+//    // Perform service-specific initialization and work.
+//
+//    SvcInit(dwArgc, lpszArgv);
+//}
+
+//LPSERVICE_MAIN_FUNCTIONA ServiceMain()
+
+VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR* lpszArgv) {
+    if (dwArgc && lpszArgv[dwArgc]) {
+        int i;
+        i = 0;
+    }
     g_StatusHandle = RegisterServiceCtrlHandler(SVCNAME, ServiceCtrlHandler);
     if (g_StatusHandle == NULL) {
         printf("Failed to register Service control handler to SCM\n");
-        return 0;
+        return;
     }
     ReportStatus(SERVICE_START_PENDING, NO_ERROR);
     g_ServiceStopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
     if (g_ServiceStopEvent == NULL) {
         ReportStatus(SERVICE_STOPPED, GetLastError());
-        return 0;
+        return;
     }
     ReportStatus(SERVICE_RUNNING, NO_ERROR);
     // execute winkey here
     Tinky_Winky();
     WaitForSingleObject(g_ServiceStopEvent, INFINITE);
     ReportStatus(SERVICE_STOPPED, NO_ERROR);
-    return 0;
 }
 
 VOID WINAPI		ServiceCtrlHandler(DWORD CtrlCode) {

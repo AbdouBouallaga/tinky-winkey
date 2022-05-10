@@ -1,7 +1,8 @@
 #ifndef TINKY_H
 #define TINKY_H
 
-#define WIN32_LEAN_AND_MEAN
+
+
 #pragma comment(lib, "advapi32.lib")
 
 
@@ -11,7 +12,8 @@
 int				Open_SCManager();
 int				OpenSvc();
 
-LPSERVICE_MAIN_FUNCTIONA		ServiceMain();
+//LPSERVICE_MAIN_FUNCTIONA		ServiceMain();
+VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR* lpszArgv);
 VOID WINAPI		ServiceCtrlHandler(DWORD CtrlCode);
 void			ReportStatus(DWORD state, DWORD Q_ERROR);
 
