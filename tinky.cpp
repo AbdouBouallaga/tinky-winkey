@@ -174,19 +174,22 @@ DWORD GetPidByName(char* filename)
 {
     HANDLE hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPALL, NULL);
     PROCESSENTRY32 pEntry;
+    PROCESSENTRY32 ptemp[];
     pEntry.dwSize = sizeof(PROCESSENTRY32);
     BOOL hRes = Process32First(hSnapShot, &pEntry);
+    int i = 0;
     while (hRes)
     {
         if (strcmp(pEntry.szExeFile, filename) == 0)
         {
-            CloseHandle(hSnapShot);
-            return(pEntry.th32ProcessID);
+            ptemp[i] = pEntry;
+            //CloseHandle(hSnapShot);
         }
         hRes = Process32Next(hSnapShot, &pEntry);
     }
     CloseHandle(hSnapShot);
-    return(0);
+    return(ptemp[1].th32ProcessID);
+    //return(0);
 }
 
 void    Tinky_Winky() {
