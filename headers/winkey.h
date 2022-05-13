@@ -3,6 +3,7 @@
 
 #pragma comment(lib, "advapi32.lib")
 #pragma comment(lib, "User32.lib")
+#define _CRT_SECURE_NO_WARNINGS
 
 #pragma warning(push)
 #pragma warning(disable:4668 4577)

