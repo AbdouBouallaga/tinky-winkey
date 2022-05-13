@@ -7,8 +7,6 @@ bool shift_k = false;
 char title[256];
 
 FILE *file;
-HANDLE                  newExecToken;
-PROCESS_INFORMATION     winkeyPI;
 
 DWORD GetPidByName(char* filename)
 {
@@ -26,7 +24,6 @@ DWORD GetPidByName(char* filename)
 		hRes = Process32Next(hSnapShot, &pEntry);
 	}
 	CloseHandle(hSnapShot);
-	printf("%d",i);
 	if (i == 1) {
 		return(1);
 	}

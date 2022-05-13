@@ -5,8 +5,8 @@
 #pragma warning(disable:4668 4577)
 #include <windows.h>
 #include <iostream>
-#include <Tlhelp32.h>
 #pragma warning(pop)
+#include <Tlhelp32.h>
 
 
 #pragma comment(lib, "advapi32.lib")

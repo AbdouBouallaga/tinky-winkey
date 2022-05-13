@@ -46,7 +46,7 @@ void DeleteSvc()
         {
             printf("DeleteService failed (%ld)\n", GetLastError());
         }
-        else printf("Service deleted successfully\n");
+        else printf("Service {tinky} deleted successfully.\n");
     }
     else {
         printf("Service not installed\n");
@@ -90,7 +90,7 @@ void SvcInstall()
         return;
     }
 
-    else printf("Service installed successfully\n");
+    else printf("Service {tinky} installed successfully\n");
 
     CloseServiceHandle(schService);
 }
@@ -99,11 +99,17 @@ void StartSvc() {
     if (!StartService(serviceH, 0, NULL)) {
         printf("Start Service failed (%ld)\n", GetLastError());
     }
+    else {
+        printf("Service {tinky} started successfully.");
+    }
 }
 
 void StopSvc() {
     if (!ControlService(serviceH, SERVICE_CONTROL_STOP, &g_ServiceStatus)) {
         printf("Stop Service failed (%ld)\n", GetLastError());
+    }
+    else {
+        printf("Service {tinky} stopped successfully.");
     }
 }
 

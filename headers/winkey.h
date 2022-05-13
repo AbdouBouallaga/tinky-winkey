@@ -8,15 +8,10 @@
 #pragma warning(push)
 #pragma warning(disable:4668 4577)
 #include <windows.h>
-#include <process.h>
-#include <Tlhelp32.h>
 #include <iostream>
-#include <psapi.h>
-#include <string>
-#include <time.h>
-#include <conio.h>
 #pragma warning(pop)
-
+#include <Tlhelp32.h>
+#include <time.h>
 
 char *HookCode(DWORD code, BOOL caps, BOOL shift);
 
